@@ -1,0 +1,128 @@
+
+SCHEMA VFIFE_schema;
+
+
+ENTITY node;
+ 	node_id : INTEGER;
+ 	node_name : STRING;
+ 	node_coords : cartesian_point;
+ 	restraints : boundary_condition;
+ 	(*parent_model : analysis_model;*)
+(*UNIQUE
+ 	URN1 : node_id, node_name, parent_model;*)
+	(*URN2 : node_coords, parent_model;*)
+(*WHERE	WRN1 : node_coords.dim = parent_model.coordinate_space_dimension;*)
+INVERSE
+	on_bar : bar FOR bar_node;
+END_ENTITY;
+
+
+
+ENTITY cartesian_point;
+	coordinates : LIST [1:3] OF REAL;
+END_ENTITY;  (*  STEP Part 42 (modified in 2nd edition)  *)
+
+
+
+ENTITY boundary_condition
+ABSTRACT SUPERTYPE OF 
+		(boundary_condition_logical);
+ 	boundary_condition_name : STRING;
+ 	boundary_condition_description : OPTIONAL STRING;
+INVERSE
+ 	restrained_nodes : SET [1:?] OF node FOR restraints;
+END_ENTITY;
+
+
+
+ENTITY boundary_condition_logical
+SUBTYPE OF (boundary_condition);
+	bc_x_displacement_free : LOGICAL;
+	bc_y_displacement_free : LOGICAL;
+	bc_z_displacement_free : LOGICAL;
+	bc_x_rotation_free : LOGICAL;
+	bc_y_rotation_free : LOGICAL;
+	bc_z_rotation_free : LOGICAL;
+END_ENTITY;
+
+
+
+ENTITY bar;
+	bar_id : INTEGER;
+	bar_node : LIST [2:?] OF node;
+	bar_material : material;
+	section_area : REAL;
+END_ENTITY;
+
+
+
+ENTITY material;
+	name: STRING;
+	young_modulus: REAL;
+	density: REAL;
+END_ENTITY;
+
+
+
+ENTITY force;
+	force_id : INTEGER;
+	load_position : cartesian_point;
+	load_value : applied_load;
+	duration_time : real; 
+	parent_load_case: load_case;
+END_ENTITY;
+
+(* Modified for LPM/6 *)
+ENTITY load_case;
+ 	load_case_name : STRING;
+ 	load_case_factor : OPTIONAL REAL;
+ 	(*governing_analyses : SET [0:?] OF analysis_method;*)
+ 	time_variation : physical_action_type;
+END_ENTITY;
+
+TYPE physical_action_type
+= ENUMERATION OF
+	(physical_action_permanent, 
+ 	physical_action_variable,
+ 	physical_action_accidental, 
+ 	physical_action_seismic);
+END_TYPE;
+
+ENTITY applied_load 
+ABSTRACT SUPERTYPE OF (applied_load_static); 
+	applied_load_name : STRING;
+END_ENTITY;
+
+ENTITY applied_load_static
+ABSTRACT SUPERTYPE OF (
+ 		applied_load_static_force)
+SUBTYPE OF (applied_load);
+END_ENTITY;
+
+ENTITY applied_load_static_force
+SUBTYPE OF (applied_load_static);
+ 	applied_force_fx : OPTIONAL real;
+ 	applied_force_fy : OPTIONAL real;
+ 	applied_force_fz : OPTIONAL real; (*force_measure_with_unit;*)
+ 	applied_moment_mx : OPTIONAL real;(*moment_measure_with_unit;*)
+ 	applied_moment_my : OPTIONAL real;
+ 	applied_moment_mz : OPTIONAL real;
+WHERE
+	WRA14 : EXISTS (applied_force_fx) OR
+		EXISTS (applied_force_fy) OR
+		EXISTS (applied_force_fz) OR
+		EXISTS (applied_moment_mx) OR
+		EXISTS (applied_moment_my) OR
+		EXISTS (applied_moment_mz);
+END_ENTITY;
+
+
+
+
+
+
+
+
+
+END_SCHEMA;
+
