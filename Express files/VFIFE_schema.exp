@@ -1,6 +1,7 @@
 
 SCHEMA VFIFE_schema;
 
+(*--------------------------------NODE--------------------------------------------*)
 
 ENTITY node;
  	node_id : INTEGER;
@@ -16,13 +17,9 @@ INVERSE
 	on_bar : bar FOR bar_node;
 END_ENTITY;
 
-
-
 ENTITY cartesian_point;
 	coordinates : LIST [1:3] OF REAL;
 END_ENTITY;  (*  STEP Part 42 (modified in 2nd edition)  *)
-
-
 
 ENTITY boundary_condition
 ABSTRACT SUPERTYPE OF 
@@ -32,8 +29,6 @@ ABSTRACT SUPERTYPE OF
 INVERSE
  	restrained_nodes : SET [1:?] OF node FOR restraints;
 END_ENTITY;
-
-
 
 ENTITY boundary_condition_logical
 SUBTYPE OF (boundary_condition);
@@ -46,6 +41,7 @@ SUBTYPE OF (boundary_condition);
 END_ENTITY;
 
 
+(*------------------------------------BAR--------------------------------------------*)
 
 ENTITY bar;
 	bar_id : INTEGER;
@@ -54,7 +50,7 @@ ENTITY bar;
 	section_area : REAL;
 END_ENTITY;
 
-
+(*--------------------------------MATERIAL--------------------------------------------*)
 
 ENTITY material;
 	name: STRING;
@@ -62,15 +58,35 @@ ENTITY material;
 	density: REAL;
 END_ENTITY;
 
+(*--------------------------------LOAD FORCE--------------------------------------------*)
+(*Edit by zxw*)
+ENTITY load
+ABSTRACT SUPERTYPE OF (ONEOF(load_member, load_node));
+	parent_load_case : load_case;
+	load_name : STRING;
+	load_description : OPTIONAL STRING;
+	duration_time : REAL; 
+END_ENTITY;
 
+ENTITY load_node
+SUBTYPE OF (load);
+	supporting_node: node;
+	load_values : applied_load;
+END_ENTITY;
 
-ENTITY force;
-	force_id : INTEGER;
+ENTITY load_member
+ABSTRACT SUPERTYPE OF (ONEOF(load_member_concentrated))
+SUBTYPE OF (load);
+	supporting_member : bar;
+END_ENTITY;
+
+ENTITY load_member_concentrated
+SUBTYPE OF (load_member);
 	load_position : cartesian_point;
 	load_value : applied_load;
-	duration_time : real; 
-	parent_load_case: load_case;
 END_ENTITY;
+
+(*--------------------------------LOAD case--------------------------------------------*)
 
 (* Modified for LPM/6 *)
 ENTITY load_case;
