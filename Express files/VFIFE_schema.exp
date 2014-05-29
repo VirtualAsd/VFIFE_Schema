@@ -65,7 +65,8 @@ ABSTRACT SUPERTYPE OF (ONEOF(load_member, load_node));
 	parent_load_case : load_case;
 	load_name : STRING;
 	load_description : OPTIONAL STRING;
-	duration_time : REAL; 
+	start_time : REAL; 
+	end_time : REAL;
 END_ENTITY;
 
 ENTITY load_node
