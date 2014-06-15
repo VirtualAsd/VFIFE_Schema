@@ -93,17 +93,91 @@ END_ENTITY;
 ENTITY load_case;
  	load_case_name : STRING;
  	load_case_factor : OPTIONAL REAL;
- 	(*governing_analyses : SET [0:?] OF analysis_method;*)
- 	time_variation : physical_action_type;
+ 	governing_analyses : SET [0:?] OF analysis_method;
+ 	time_variation : physical_action;
 END_ENTITY;
 
-TYPE physical_action_type
-= ENUMERATION OF
-	(physical_action_permanent, 
- 	physical_action_variable,
- 	physical_action_accidental, 
- 	physical_action_seismic);
-END_TYPE;
+(*--------------analysis methods--------------*)
+
+ENTITY analysis_method
+     SUPERTYPE OF (ONEOF 
+          (analysis_method_dynamic,                        (*动力分析方法*)
+          (*analysis_method_pseudo_dynamic,                  拟动力分析方法*)
+          analysis_method_static));                  	  (*静力分析方法*)
+     analysis_name : string;
+     analysis_assumptions : OPTIONAL string;
+END_ENTITY;
+
+ENTITY analysis_method_dynamic
+SUBTYPE OF (analysis_method);
+	analysis_type : dynamic_analysis_type;
+END_ENTITY;
+
+ENTITY analysis_method_static
+SUBTYPE OF (analysis_method);
+ 	analysis_type : static_analysis_type;
+END_ENTITY;
+
+(*--------------physical actions--------------*)
+
+ENTITY physical_action
+SUPERTYPE OF (ONEOF
+ 		(physical_action_permanent, 	(*恒力*)
+ 		physical_action_variable,		(*变力*)
+ 		physical_action_accidental, 	(*突发力*)
+ 		physical_action_seismic));		(*地震力*)
+ 	action_nature : static_or_dynamic;
+ 	action_spatial_variation : spatial_variation;
+ 	action_type	 : direct_or_indirect_action;
+	(*basic_magnitude : OPTIONAL measure_with_unit;
+	derived_magnitude : OPTIONAL measure_with_unit;*)
+ 	derivation_factors : LIST [0:?] OF REAL;
+ 	derivation_factor_labels : LIST [0:?] OF string;
+WHERE
+	WRP11 : SIZEOF (derivation_factors) = SIZEOF (derivation_factor_labels);
+END_ENTITY;
+
+ENTITY physical_action_accidental 
+SUBTYPE OF (physical_action);
+ 	action_source : action_source_accidential;
+END_ENTITY;
+
+ENTITY physical_action_permanent
+SUBTYPE OF (physical_action);
+ 	action_source : action_source_permanent;
+END_ENTITY;
+
+ENTITY physical_action_seismic
+SUBTYPE OF (physical_action);
+END_ENTITY;
+
+ENTITY physical_action_variable 
+ABSTRACT SUPERTYPE OF (ONEOF
+ 		(physical_action_variable_long_term, 
+ 		physical_action_variable_transient, 
+ 		physical_action_variable_short_term))
+SUBTYPE OF (physical_action);
+END_ENTITY;
+
+ENTITY physical_action_variable_long_term
+SUBTYPE OF (physical_action_variable);
+ 	action_source : action_source_variable_long_term;
+END_ENTITY;
+
+ENTITY physical_action_variable_short_term 
+SUBTYPE OF (physical_action_variable);
+ 	action_source : action_source_variable_short_term;
+END_ENTITY;
+
+ENTITY physical_action_variable_transient 
+SUBTYPE OF (physical_action_variable);
+	action_source : action_source_variable_transient;
+END_ENTITY;
+
+
+
+
+(*---------applied load-----------*)
 
 ENTITY applied_load 
 ABSTRACT SUPERTYPE OF (applied_load_static); 
@@ -135,11 +209,82 @@ END_ENTITY;
 
 
 
+(*--------TYPE DEFINES--------*)
 
+TYPE static_or_dynamic
+ = ENUMERATION OF 
+	(static, dynamic, quasi_dynamic);
+END_TYPE;
 
+TYPE spatial_variation
+ = ENUMERATION OF 
+	(free_action, fixed_action);
+END_TYPE;
 
+TYPE action_source_accidential
+ = ENUMERATION OF 
+	(fire, impulse, impact, undefined);
+END_TYPE;
 
+TYPE dynamic_analysis_type
+ = ENUMERATION OF
+	(free_vibration, 
+ 	stressed_free_vibration, 
+ 	damped_vibration,
+ 	linear_dynamic, 
+ 	response_spectrum,
+ 	undefined);
+END_TYPE;
 
+TYPE action_source_permanent
+ = ENUMERATION OF 
+	(dead, 
+	self_weight,
+	prestress,
+	lack_of_fit,
+	undefined);
+END_TYPE;
+
+TYPE action_source_variable_long_term
+ = ENUMERATION OF 
+ 	(live,
+	system_imperfection,
+	settlement,
+	temperature_effect,
+	undefined);
+END_TYPE;
+
+TYPE action_source_variable_short_term
+ = ENUMERATION OF 
+ 	(buoyancy, 
+	wind, 
+	snow, 
+	ice, 
+	current, 
+	wave, 
+	rain, 
+	undefined);
+END_TYPE;
+
+TYPE action_source_variable_transient
+ = ENUMERATION OF 
+	(transport, erection, propping, undefined);
+END_TYPE;
+
+TYPE static_analysis_type
+ = ENUMERATION OF
+ 	(elastic_1st_order,
+	elastic_2nd_order,
+	rigid_plastic,
+	elasto_plastic,
+	elastic_perfectly_plastic,
+	undefined);
+END_TYPE;
+
+TYPE direct_or_indirect_action
+ = ENUMERATION OF 
+	(direct_action, indirect_action);
+END_TYPE;
 
 END_SCHEMA;
 
