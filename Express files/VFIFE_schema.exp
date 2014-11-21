@@ -8,11 +8,6 @@ ENTITY node;
  	node_name : STRING;
  	node_coords : cartesian_point;
  	restraints : boundary_condition;
- 	(*parent_model : analysis_model;*)
-(*UNIQUE
- 	URN1 : node_id, node_name, parent_model;*)
-	(*URN2 : node_coords, parent_model;*)
-(*WHERE	WRN1 : node_coords.dim = parent_model.coordinate_space_dimension;*)
 INVERSE
 	on_bar : bar FOR bar_node;
 END_ENTITY;
@@ -93,29 +88,7 @@ END_ENTITY;
 ENTITY load_case;
  	load_case_name : STRING;
  	load_case_factor : OPTIONAL REAL;
- 	governing_analyses : SET [0:?] OF analysis_method;
  	time_variation : physical_action;
-END_ENTITY;
-
-(*--------------analysis methods--------------*)
-
-ENTITY analysis_method
-     SUPERTYPE OF (ONEOF 
-          (analysis_method_dynamic,                        (*动力分析方法*)
-          (*analysis_method_pseudo_dynamic,                  拟动力分析方法*)
-          analysis_method_static));                  	  (*静力分析方法*)
-     analysis_name : string;
-     analysis_assumptions : OPTIONAL string;
-END_ENTITY;
-
-ENTITY analysis_method_dynamic
-SUBTYPE OF (analysis_method);
-	analysis_type : dynamic_analysis_type;
-END_ENTITY;
-
-ENTITY analysis_method_static
-SUBTYPE OF (analysis_method);
- 	analysis_type : static_analysis_type;
 END_ENTITY;
 
 (*--------------physical actions--------------*)
@@ -124,17 +97,9 @@ ENTITY physical_action
 SUPERTYPE OF (ONEOF
  		(physical_action_permanent, 	(*恒力*)
  		physical_action_variable,		(*变力*)
- 		physical_action_accidental, 	(*突发力*)
- 		physical_action_seismic));		(*地震力*)
+ 		physical_action_accidental 		(*突发力*)
+ 		));		(*地震力*)
  	action_nature : static_or_dynamic;
- 	action_spatial_variation : spatial_variation;
- 	action_type	 : direct_or_indirect_action;
-	(*basic_magnitude : OPTIONAL measure_with_unit;
-	derived_magnitude : OPTIONAL measure_with_unit;*)
- 	derivation_factors : LIST [0:?] OF REAL;
- 	derivation_factor_labels : LIST [0:?] OF string;
-WHERE
-	WRP11 : SIZEOF (derivation_factors) = SIZEOF (derivation_factor_labels);
 END_ENTITY;
 
 ENTITY physical_action_accidental 
@@ -153,20 +118,9 @@ END_ENTITY;
 
 ENTITY physical_action_variable 
 ABSTRACT SUPERTYPE OF (ONEOF
- 		(physical_action_variable_long_term, 
- 		physical_action_variable_transient, 
- 		physical_action_variable_short_term))
+ 		(
+ 		physical_action_variable_transient))
 SUBTYPE OF (physical_action);
-END_ENTITY;
-
-ENTITY physical_action_variable_long_term
-SUBTYPE OF (physical_action_variable);
- 	action_source : action_source_variable_long_term;
-END_ENTITY;
-
-ENTITY physical_action_variable_short_term 
-SUBTYPE OF (physical_action_variable);
- 	action_source : action_source_variable_short_term;
 END_ENTITY;
 
 ENTITY physical_action_variable_transient 
@@ -208,7 +162,6 @@ WHERE
 END_ENTITY;
 
 
-
 (*--------TYPE DEFINES--------*)
 
 TYPE static_or_dynamic
@@ -216,24 +169,9 @@ TYPE static_or_dynamic
 	(static, dynamic, quasi_dynamic);
 END_TYPE;
 
-TYPE spatial_variation
- = ENUMERATION OF 
-	(free_action, fixed_action);
-END_TYPE;
-
 TYPE action_source_accidential
  = ENUMERATION OF 
 	(fire, impulse, impact, undefined);
-END_TYPE;
-
-TYPE dynamic_analysis_type
- = ENUMERATION OF
-	(free_vibration, 
- 	stressed_free_vibration, 
- 	damped_vibration,
- 	linear_dynamic, 
- 	response_spectrum,
- 	undefined);
 END_TYPE;
 
 TYPE action_source_permanent
@@ -245,45 +183,9 @@ TYPE action_source_permanent
 	undefined);
 END_TYPE;
 
-TYPE action_source_variable_long_term
- = ENUMERATION OF 
- 	(live,
-	system_imperfection,
-	settlement,
-	temperature_effect,
-	undefined);
-END_TYPE;
-
-TYPE action_source_variable_short_term
- = ENUMERATION OF 
- 	(buoyancy, 
-	wind, 
-	snow, 
-	ice, 
-	current, 
-	wave, 
-	rain, 
-	undefined);
-END_TYPE;
-
 TYPE action_source_variable_transient
  = ENUMERATION OF 
 	(transport, erection, propping, undefined);
-END_TYPE;
-
-TYPE static_analysis_type
- = ENUMERATION OF
- 	(elastic_1st_order,
-	elastic_2nd_order,
-	rigid_plastic,
-	elasto_plastic,
-	elastic_perfectly_plastic,
-	undefined);
-END_TYPE;
-
-TYPE direct_or_indirect_action
- = ENUMERATION OF 
-	(direct_action, indirect_action);
 END_TYPE;
 
 END_SCHEMA;
